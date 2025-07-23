@@ -1,10 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChartData } from "@/types/trading";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, ReferenceLine } from 'recharts';
 import { binancePublicAPI } from '@/services/binancePublicAPI';
+import { patternRecognition, ChartPattern } from '@/services/patternRecognition';
 import { useState, useEffect } from 'react';
-import { Clock } from 'lucide-react';
+import { Clock, Eye, Target } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
 
 interface PriceChartProps {
   data: ChartData[];

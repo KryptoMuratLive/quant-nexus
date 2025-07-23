@@ -35,10 +35,10 @@ export interface OrderStatus {
 
 export const tpslManager = {
   
-  // Default Settings
+  // Default Settings - 2:1 Risk-Reward Ratio
   defaultSettings: {
-    atrMultiplierSL: 1.5,
-    atrMultiplierTP: 2.5,
+    atrMultiplierSL: 1.0,   // 1x ATR für Stop Loss
+    atrMultiplierTP: 2.0,   // 2x ATR für Take Profit (2:1 Ratio)
     useStructuralSL: true,
     enableTrailing: false,
     enablePartialTP: true,

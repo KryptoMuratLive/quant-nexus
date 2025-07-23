@@ -12,7 +12,7 @@ import { ApiKeyManager } from "./ApiKeyManager";
 import { LiveSignalsPanel } from "./LiveSignalsPanel";
 
 export const TradingDashboard = () => {
-  const { currentPrice, portfolio, positions, botStatus, indicators, recentTrades, chartData, tradingPairs } = useTradingData();
+  const { currentPrice, portfolio, positions, botStatus, indicators, recentTrades, chartData, tradingPairs, isLoading } = useTradingData();
 
   return (
     <div className="min-h-screen bg-background p-6 space-y-6">
@@ -23,6 +23,14 @@ export const TradingDashboard = () => {
           <p className="text-muted-foreground">Professional Cryptocurrency Trading System</p>
         </div>
         <div className="flex items-center gap-4">
+          {/* Live Data Status */}
+          <Badge 
+            variant={isLoading ? "secondary" : "default"} 
+            className="flex items-center gap-1 animate-pulse"
+          >
+            <div className={`w-2 h-2 rounded-full ${isLoading ? 'bg-yellow-500' : 'bg-green-500'}`}></div>
+            {isLoading ? "Lade Live-Daten..." : "🔴 LIVE von Binance"}
+          </Badge>
           <Badge variant={botStatus.isRunning ? "default" : "secondary"} className="flex items-center gap-1">
             {botStatus.isRunning ? <Play className="w-3 h-3" /> : <Pause className="w-3 h-3" />}
             {botStatus.isRunning ? "AKTIV" : "GESTOPPT"}

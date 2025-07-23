@@ -58,9 +58,14 @@ export const tpslManager = {
     settings: TPSLSettings = this.defaultSettings
   ): TPSLLevels {
     console.log('📊 TP/SL Manager: Berechne Levels...');
+    console.log('📊 Entry Price:', entryPrice);
+    console.log('📊 Chart Data Length:', chartData.length);
+    console.log('📊 Direction:', direction);
+    console.log('📊 Settings:', settings);
     
     // ATR berechnen (14 Perioden)
     const atrValue = this.calculateATR(chartData, 14);
+    console.log('📊 ATR Value:', atrValue);
     
     let stopLoss: number;
     let takeProfit1: number;
@@ -74,6 +79,12 @@ export const tpslManager = {
       takeProfit1 = entryPrice + (atrValue * settings.atrMultiplierTP);
       takeProfit2 = entryPrice + (atrValue * settings.atrMultiplierTP * 1.5);
       takeProfit3 = entryPrice + (atrValue * settings.atrMultiplierTP * 2.0);
+      
+      console.log('📊 LONG Calculations:');
+      console.log('📊 Stop Loss:', stopLoss);
+      console.log('📊 TP1:', takeProfit1);
+      console.log('📊 TP2:', takeProfit2);
+      console.log('📊 TP3:', takeProfit3);
       
       // Struktureller SL: unter letzten Candle-Wick
       if (settings.useStructuralSL && chartData.length > 0) {
@@ -111,7 +122,11 @@ export const tpslManager = {
 
   // ATR Calculation (Average True Range)
   calculateATR(chartData: any[], period: number = 14): number {
-    if (chartData.length < period + 1) return 0;
+    console.log('📊 ATR Calculation - Chart Length:', chartData.length, 'Period:', period);
+    if (chartData.length < period + 1) {
+      console.log('📊 ATR: Not enough data, returning 0');
+      return 0;
+    }
     
     const trueRanges = [];
     
@@ -129,6 +144,9 @@ export const tpslManager = {
     // ATR = Average der letzten 14 True Ranges
     const recentTRs = trueRanges.slice(-period);
     const atr = recentTRs.reduce((sum, tr) => sum + tr, 0) / recentTRs.length;
+    
+    console.log('📊 ATR Calculated:', atr, 'from', recentTRs.length, 'true ranges');
+    console.log('📊 Sample True Ranges:', recentTRs.slice(0, 3));
     
     return atr;
   },

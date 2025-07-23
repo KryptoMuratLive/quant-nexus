@@ -33,6 +33,9 @@ export const BotControls = ({ botStatus }: BotControlsProps) => {
     try {
       const res = await fetch("http://149.102.137.77:8000/stop_bot", {
         method: "POST",
+        headers: {
+          "Authorization": "Bearer mein-super-sicherer-schlüssel",
+        },
       });
       const data = await res.json();
       console.log("Bot gestoppt:", data);

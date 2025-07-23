@@ -14,6 +14,8 @@ import { LiveSignalsPanel } from "./LiveSignalsPanel";
 import { AITrainingCenter } from "./AITrainingCenter";
 import { CompleteSignalPanel } from "./CompleteSignalPanel";
 import { AIMarketAnalyzer } from "./AIMarketAnalyzer";
+import { MetaAIPanel } from "./MetaAIPanel";
+import { LiveControlPanel } from "./LiveControlPanel";
 
 export const TradingDashboard = () => {
   const { currentPrice, portfolio, positions, botStatus, indicators, recentTrades, chartData, tradingPairs, isLoading } = useTradingData();
@@ -135,6 +137,12 @@ export const TradingDashboard = () => {
           <IndicatorsPanel indicators={indicators} />
           <TradesHistory trades={recentTrades} />
         </div>
+      </div>
+
+      {/* Meta-AI & Live Control - Neue Funktionen */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
+        <MetaAIPanel />
+        <LiveControlPanel />
       </div>
 
       {/* AI Training Section */}

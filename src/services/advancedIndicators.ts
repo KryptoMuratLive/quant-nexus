@@ -268,5 +268,32 @@ export const advancedIndicators = {
     const ema12 = this.calculateEMA(prices, 12);
     const ema26 = this.calculateEMA(prices, 26);
     return ema12 - ema26;
+  },
+
+  // Bollinger Bands für Mean Reversion
+  calculateBollingerBands(prices: number[], period: number = 20, stdDev: number = 2): {
+    upper: number;
+    middle: number;
+    lower: number;
+    squeeze: boolean;
+  } {
+    if (prices.length < period) {
+      const currentPrice = prices[prices.length - 1] || 0;
+      return { upper: currentPrice, middle: currentPrice, lower: currentPrice, squeeze: false };
+    }
+    
+    const recentPrices = prices.slice(-period);
+    const middle = recentPrices.reduce((a, b) => a + b, 0) / period;
+    
+    const variance = recentPrices.reduce((sum, price) => sum + Math.pow(price - middle, 2), 0) / period;
+    const standardDeviation = Math.sqrt(variance);
+    
+    const upper = middle + (standardDeviation * stdDev);
+    const lower = middle - (standardDeviation * stdDev);
+    
+    // Squeeze detection
+    const squeeze = (upper - lower) / middle < 0.02; // < 2% der Mitte
+    
+    return { upper, middle, lower, squeeze };
   }
 };

@@ -2,6 +2,14 @@
 export const binancePublicAPI = {
   baseUrl: 'https://api.binance.com/api/v3',
   
+  // Supported timeframes for charts
+  timeframes: {
+    '1m': '1 Minute',
+    '15m': '15 Minuten', 
+    '4h': '4 Stunden',
+    '1d': '1 Tag'
+  },
+  
   // Get current price for any symbol
   async getCurrentPrice(symbol: string = 'BTCUSDT') {
     try {
@@ -34,7 +42,7 @@ export const binancePublicAPI = {
     }
   },
 
-  // Get kline/candlestick data
+  // Get kline/candlestick data with multiple timeframes
   async getKlineData(symbol: string = 'BTCUSDT', interval: string = '1m', limit: number = 100) {
     try {
       const response = await fetch(

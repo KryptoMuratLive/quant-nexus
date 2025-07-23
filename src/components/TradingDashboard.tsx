@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useTradingData } from "@/hooks/useTradingData";
 import { Play, Pause, Settings, TrendingUp, TrendingDown, DollarSign, Activity } from "lucide-react";
 import { PriceChart } from "./PriceChart";
+import { CandlestickChart } from "./CandlestickChart";
 import { IndicatorsPanel } from "./IndicatorsPanel";
 import { PositionsTable } from "./PositionsTable";
 import { TradesHistory } from "./TradesHistory";
@@ -102,14 +103,18 @@ export const TradingDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart Section */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Line Chart */}
           <Card>
             <CardHeader>
-              <CardTitle>BTC/USDT Chart & Signale</CardTitle>
+              <CardTitle>BTC/USDT Live Chart</CardTitle>
             </CardHeader>
             <CardContent>
               <PriceChart data={chartData} currentPrice={currentPrice} />
             </CardContent>
           </Card>
+
+          {/* Candlestick Chart */}
+          <CandlestickChart data={chartData} currentPrice={currentPrice} />
 
           <PositionsTable positions={positions} />
         </div>

@@ -12,6 +12,7 @@ import { BotControls } from "./BotControls";
 import { ApiKeyManager } from "./ApiKeyManager";
 import { LiveSignalsPanel } from "./LiveSignalsPanel";
 import { AITrainingCenter } from "./AITrainingCenter";
+import { CompleteSignalPanel } from "./CompleteSignalPanel";
 
 export const TradingDashboard = () => {
   const { currentPrice, portfolio, positions, botStatus, indicators, recentTrades, chartData, tradingPairs, isLoading } = useTradingData();
@@ -93,6 +94,9 @@ export const TradingDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Complete Signal Panel */}
+      <CompleteSignalPanel />
 
       {/* API Configuration */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

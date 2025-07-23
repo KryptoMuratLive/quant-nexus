@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { TradingPair, Portfolio, Position, BotStatus, TechnicalIndicator, Trade, ChartData } from '@/types/trading';
+import { useBinanceAPI } from './useBinanceAPI';
 
-// Simulated real-time data for demo
+// Enhanced hook with real Binance data
 export const useTradingData = () => {
-  const [currentPrice, setCurrentPrice] = useState(43250.67);
+  const { isConnected, fetchTickerData, fetchKlineData } = useBinanceAPI();
+  const [currentPrice, setCurrentPrice] = useState(120250.67); // Current BTC price around 120K
   const [tradingPairs, setTradingPairs] = useState<TradingPair[]>([
-    { symbol: 'BTCUSDT', baseAsset: 'BTC', quoteAsset: 'USDT', price: 43250.67, change24h: 2.34, volume24h: 28756.23 },
-    { symbol: 'ETHUSDT', baseAsset: 'ETH', quoteAsset: 'USDT', price: 2245.89, change24h: -1.12, volume24h: 156234.45 },
+    { symbol: 'BTCUSDT', baseAsset: 'BTC', quoteAsset: 'USDT', price: 120250.67, change24h: 2.34, volume24h: 28756.23 },
+    { symbol: 'ETHUSDT', baseAsset: 'ETH', quoteAsset: 'USDT', price: 4245.89, change24h: -1.12, volume24h: 156234.45 },
     { symbol: 'ADAUSDT', baseAsset: 'ADA', quoteAsset: 'USDT', price: 0.4567, change24h: 5.67, volume24h: 8934.12 },
   ]);
 
@@ -24,12 +26,12 @@ export const useTradingData = () => {
       symbol: 'BTCUSDT',
       type: 'LONG',
       size: 0.05,
-      entryPrice: 42800,
-      currentPrice: 43250.67,
-      pnl: 22.54,
-      pnlPercent: 1.05,
-      stopLoss: 42000,
-      takeProfit: 44000,
+      entryPrice: 118800,
+      currentPrice: 120250.67,
+      pnl: 72.54,
+      pnlPercent: 1.22,
+      stopLoss: 117000,
+      takeProfit: 125000,
       timestamp: Date.now() - 3600000,
     },
     {
@@ -37,12 +39,12 @@ export const useTradingData = () => {
       symbol: 'ETHUSDT',
       type: 'SHORT',
       size: 1.2,
-      entryPrice: 2280,
-      currentPrice: 2245.89,
-      pnl: 40.93,
-      pnlPercent: 1.79,
-      stopLoss: 2350,
-      takeProfit: 2200,
+      entryPrice: 4380,
+      currentPrice: 4245.89,
+      pnl: 160.93,
+      pnlPercent: 3.06,
+      stopLoss: 4450,
+      takeProfit: 4100,
       timestamp: Date.now() - 7200000,
     },
   ]);
@@ -58,8 +60,8 @@ export const useTradingData = () => {
 
   const [indicators, setIndicators] = useState<TechnicalIndicator[]>([
     { name: 'RSI(14)', value: 67.3, signal: 'BUY', strength: 0.7 },
-    { name: 'MACD', value: 125.67, signal: 'BUY', strength: 0.8 },
-    { name: 'EMA(20)', value: 43180.23, signal: 'BUY', strength: 0.6 },
+    { name: 'MACD', value: 325.67, signal: 'BUY', strength: 0.8 },
+    { name: 'EMA(20)', value: 119750.23, signal: 'BUY', strength: 0.6 },
     { name: 'Bollinger Bands', value: 0.85, signal: 'NEUTRAL', strength: 0.5 },
     { name: 'Volume Profile', value: 1.23, signal: 'BUY', strength: 0.9 },
   ]);
@@ -71,9 +73,9 @@ export const useTradingData = () => {
       symbol: 'BTCUSDT',
       type: 'BUY',
       side: 'LONG',
-      price: 43240.12,
+      price: 120240.12,
       quantity: 0.025,
-      pnl: 12.34,
+      pnl: 34.56,
       strategy: 'AI-Enhanced',
       confidence: 0.87,
     },
@@ -83,9 +85,9 @@ export const useTradingData = () => {
       symbol: 'ETHUSDT',
       type: 'SELL',
       side: 'SHORT',
-      price: 2255.67,
+      price: 4255.67,
       quantity: 0.8,
-      pnl: -8.45,
+      pnl: 12.45,
       strategy: 'Momentum',
       confidence: 0.72,
     },
@@ -93,54 +95,136 @@ export const useTradingData = () => {
 
   const [chartData, setChartData] = useState<ChartData[]>([]);
 
-  // Simulate real-time price updates
+  // Fetch real Binance data when connected
+  const fetchRealData = async () => {
+    if (isConnected) {
+      try {
+        // Fetch real ticker data
+        const btcTicker = await fetchTickerData('BTCUSDT');
+        const ethTicker = await fetchTickerData('ETHUSDT');
+        
+        if (btcTicker) {
+          const realPrice = parseFloat(btcTicker.price);
+          setCurrentPrice(realPrice);
+          
+          setTradingPairs(prev => prev.map(pair => {
+            if (pair.symbol === 'BTCUSDT') {
+              return {
+                ...pair,
+                price: realPrice,
+                change24h: parseFloat(btcTicker.priceChangePercent),
+              };
+            }
+            return pair;
+          }));
+          
+          // Update positions with real prices
+          setPositions(prev => prev.map(pos => {
+            if (pos.symbol === 'BTCUSDT') {
+              const pnl = pos.type === 'LONG' 
+                ? (realPrice - pos.entryPrice) * pos.size
+                : (pos.entryPrice - realPrice) * pos.size;
+              const pnlPercent = pos.type === 'LONG'
+                ? ((realPrice - pos.entryPrice) / pos.entryPrice) * 100
+                : ((pos.entryPrice - realPrice) / pos.entryPrice) * 100;
+              
+              return {
+                ...pos,
+                currentPrice: realPrice,
+                pnl,
+                pnlPercent,
+              };
+            }
+            return pos;
+          }));
+        }
+
+        if (ethTicker) {
+          const ethPrice = parseFloat(ethTicker.price);
+          setTradingPairs(prev => prev.map(pair => {
+            if (pair.symbol === 'ETHUSDT') {
+              return {
+                ...pair,
+                price: ethPrice,
+                change24h: parseFloat(ethTicker.priceChangePercent),
+              };
+            }
+            return pair;
+          }));
+        }
+
+        // Fetch real chart data
+        const klineData = await fetchKlineData('BTCUSDT', '1m', 100);
+        if (klineData) {
+          setChartData(klineData);
+        }
+      } catch (error) {
+        console.error('Error fetching real data:', error);
+      }
+    }
+  };
+
+  // Initial load of real data
+  useEffect(() => {
+    if (isConnected) {
+      fetchRealData();
+    }
+  }, [isConnected]);
+
+  // Real-time updates - use real data if connected, otherwise simulate
   useEffect(() => {
     const interval = setInterval(() => {
-      const priceChange = (Math.random() - 0.5) * 100;
-      const newPrice = Math.max(40000, currentPrice + priceChange);
-      setCurrentPrice(newPrice);
+      if (isConnected) {
+        // Fetch real data every 5 seconds when connected
+        fetchRealData();
+      } else {
+        // Fallback to simulated data when not connected
+        const priceChange = (Math.random() - 0.5) * 500; // Larger range for 120K price
+        const newPrice = Math.max(115000, Math.min(125000, currentPrice + priceChange));
+        setCurrentPrice(newPrice);
 
-      // Update trading pairs
-      setTradingPairs(prev => prev.map(pair => ({
-        ...pair,
-        price: pair.symbol === 'BTCUSDT' ? newPrice : pair.price + (Math.random() - 0.5) * 10,
-      })));
+        // Update trading pairs
+        setTradingPairs(prev => prev.map(pair => ({
+          ...pair,
+          price: pair.symbol === 'BTCUSDT' ? newPrice : pair.price + (Math.random() - 0.5) * 50,
+        })));
 
-      // Update positions
-      setPositions(prev => prev.map(pos => ({
-        ...pos,
-        currentPrice: pos.symbol === 'BTCUSDT' ? newPrice : pos.currentPrice + (Math.random() - 0.5) * 10,
-        pnl: pos.type === 'LONG' 
-          ? (newPrice - pos.entryPrice) * pos.size
-          : (pos.entryPrice - newPrice) * pos.size,
-        pnlPercent: pos.type === 'LONG'
-          ? ((newPrice - pos.entryPrice) / pos.entryPrice) * 100
-          : ((pos.entryPrice - newPrice) / pos.entryPrice) * 100,
-      })));
+        // Update positions
+        setPositions(prev => prev.map(pos => ({
+          ...pos,
+          currentPrice: pos.symbol === 'BTCUSDT' ? newPrice : pos.currentPrice + (Math.random() - 0.5) * 50,
+          pnl: pos.type === 'LONG' 
+            ? (newPrice - pos.entryPrice) * pos.size
+            : (pos.entryPrice - newPrice) * pos.size,
+          pnlPercent: pos.type === 'LONG'
+            ? ((newPrice - pos.entryPrice) / pos.entryPrice) * 100
+            : ((pos.entryPrice - newPrice) / pos.entryPrice) * 100,
+        })));
 
-      // Update indicators
-      setIndicators(prev => prev.map(ind => ({
-        ...ind,
-        value: ind.value + (Math.random() - 0.5) * 5,
-        signal: Math.random() > 0.7 ? (Math.random() > 0.5 ? 'BUY' : 'SELL') : ind.signal,
-      })));
+        // Update indicators with values appropriate for 120K price
+        setIndicators(prev => prev.map(ind => ({
+          ...ind,
+          value: ind.name === 'EMA(20)' ? newPrice - 500 + (Math.random() * 1000) : ind.value + (Math.random() - 0.5) * 5,
+          signal: Math.random() > 0.7 ? (Math.random() > 0.5 ? 'BUY' : 'SELL') : ind.signal,
+        })));
 
-      // Add new chart data point
-      setChartData(prev => {
-        const newPoint: ChartData = {
-          timestamp: Date.now(),
-          open: prev.length > 0 ? prev[prev.length - 1].close : newPrice,
-          high: newPrice + Math.random() * 50,
-          low: newPrice - Math.random() * 50,
-          close: newPrice,
-          volume: Math.random() * 100,
-        };
-        return [...prev.slice(-100), newPoint]; // Keep last 100 points
-      });
-    }, 2000);
+        // Add new chart data point
+        setChartData(prev => {
+          const newPoint: ChartData = {
+            timestamp: Date.now(),
+            open: prev.length > 0 ? prev[prev.length - 1].close : newPrice,
+            high: newPrice + Math.random() * 200,
+            low: newPrice - Math.random() * 200,
+            close: newPrice,
+            volume: Math.random() * 100,
+          };
+          return [...prev.slice(-100), newPoint]; // Keep last 100 points
+        });
+      }
+    }, isConnected ? 5000 : 2000); // 5 seconds for real data, 2 seconds for simulation
 
     return () => clearInterval(interval);
-  }, [currentPrice]);
+  }, [currentPrice, isConnected]);
 
   return {
     currentPrice,

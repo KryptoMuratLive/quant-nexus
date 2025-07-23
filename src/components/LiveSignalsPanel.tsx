@@ -33,36 +33,28 @@ export const LiveSignalsPanel = () => {
   const fetchSignal = async () => {
     setIsGenerating(true);
     try {
-      // Verwende das trainierte KI-Model für bessere Signale
-      const mockData = {
-        price: 97250,
-        rsi: 67.3,
-        ema20: 96800,
-        ema50: 95200,
-        macd: 125.67,
-        volume: 1.23
-      };
+      // Get live signal from backend
+      const res = await fetch("http://149.102.137.77:8000/get_trading_signal", {
+        method: "GET",
+      });
       
-      const aiSignal = generateImprovedSignal(
-        mockData.price,
-        mockData.rsi,
-        mockData.ema20,
-        mockData.ema50,
-        mockData.macd,
-        mockData.volume
-      );
+      if (!res.ok) {
+        throw new Error("Signal konnte nicht abgerufen werden");
+      }
+      
+      const signalData = await res.json();
       
       const signal: TradingSignal = {
-        symbol: 'BTCUSDT',
-        signal: aiSignal.signal,
-        confidence: Math.round(aiSignal.confidence),
-        currentPrice: mockData.price,
+        symbol: signalData.symbol || 'BTCUSDT',
+        signal: signalData.signal || 'NEUTRAL',
+        confidence: signalData.confidence || 50,
+        currentPrice: signalData.current_price || 0,
         indicators: {
-          rsi: mockData.rsi,
-          ema20: mockData.ema20,
-          ema50: mockData.ema50
+          rsi: signalData.indicators?.rsi || 50,
+          ema20: signalData.indicators?.ema20 || 0,
+          ema50: signalData.indicators?.ema50 || 0
         },
-        reasoning: 'reasoning' in aiSignal ? aiSignal.reasoning : ['Standard technische Analyse'],
+        reasoning: signalData.reasoning || ['Live-Signal vom Backend'],
         timestamp: Date.now()
       };
       
@@ -71,7 +63,7 @@ export const LiveSignalsPanel = () => {
       // Show notification for strong signals
       if (signal.confidence > 70) {
         toast({
-          title: `${currentModel ? '🧠 KI-Enhanced' : '🚨'} ${signal.signal} Signal`,
+          title: `🚨 ${signal.signal} Signal`,
           description: `${signal.confidence}% Confidence - $${signal.currentPrice}`,
           duration: 5000,
         });
@@ -80,7 +72,7 @@ export const LiveSignalsPanel = () => {
     } catch (error) {
       toast({
         title: "Fehler",
-        description: "Signal konnte nicht generiert werden",
+        description: `Signal konnte nicht generiert werden: ${error}`,
         variant: "destructive",
       });
     } finally {

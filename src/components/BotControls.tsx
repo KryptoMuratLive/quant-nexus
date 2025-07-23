@@ -16,6 +16,32 @@ export const BotControls = ({ botStatus }: BotControlsProps) => {
   const [autoTrade, setAutoTrade] = useState(true);
   const [aiEnabled, setAiEnabled] = useState(true);
 
+  const startBot = async () => {
+    try {
+      const res = await fetch("http://149.102.137.77:8000/start_bot", {
+        method: "POST",
+      });
+      const data = await res.json();
+      console.log("Bot gestartet:", data);
+      setIsRunning(true);
+    } catch (error) {
+      console.error("Fehler beim Starten:", error);
+    }
+  };
+
+  const stopBot = async () => {
+    try {
+      const res = await fetch("http://149.102.137.77:8000/stop_bot", {
+        method: "POST",
+      });
+      const data = await res.json();
+      console.log("Bot gestoppt:", data);
+      setIsRunning(false);
+    } catch (error) {
+      console.error("Fehler beim Stoppen:", error);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -30,7 +56,7 @@ export const BotControls = ({ botStatus }: BotControlsProps) => {
           <Button
             className="flex-1"
             variant={isRunning ? "destructive" : "default"}
-            onClick={() => setIsRunning(!isRunning)}
+            onClick={isRunning ? stopBot : startBot}
           >
             {isRunning ? (
               <>

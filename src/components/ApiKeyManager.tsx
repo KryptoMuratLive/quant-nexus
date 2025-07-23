@@ -38,7 +38,7 @@ export const ApiKeyManager = () => {
     }
   }, []);
 
-  const handleSaveCredentials = () => {
+  const handleSaveCredentials = async () => {
     if (!credentials.apiKey || !credentials.secretKey) {
       toast({
         title: "Fehler",
@@ -50,27 +50,43 @@ export const ApiKeyManager = () => {
 
     setIsLoading(true);
     
-    // Simulate API validation
-    setTimeout(() => {
-      try {
-        // Save to localStorage (encrypted in production)
+    try {
+      // Send credentials to backend
+      const res = await fetch("http://149.102.137.77:8000/set_api_keys", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          api_key: credentials.apiKey,
+          secret_key: credentials.secretKey,
+          testnet: credentials.isTestnet,
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        // Save to localStorage for UI persistence
         localStorage.setItem('binance_credentials', JSON.stringify(credentials));
         setIsConnected(true);
-        setIsLoading(false);
         
         toast({
           title: "✅ Verbindung erfolgreich",
-          description: "Binance API erfolgreich verbunden",
+          description: "API Keys erfolgreich an Backend übertragen",
         });
-      } catch (error) {
-        setIsLoading(false);
-        toast({
-          title: "Fehler",
-          description: "Verbindung fehlgeschlagen",
-          variant: "destructive",
-        });
+      } else {
+        throw new Error(data.error || "API Verbindung fehlgeschlagen");
       }
-    }, 2000);
+    } catch (error) {
+      toast({
+        title: "Fehler",
+        description: `Verbindung fehlgeschlagen: ${error}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDisconnect = () => {

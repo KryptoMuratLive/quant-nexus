@@ -1,8 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTradingData } from "@/hooks/useTradingData";
-import { Play, Pause, Settings, TrendingUp, TrendingDown, DollarSign, Activity } from "lucide-react";
+import { Play, Pause, Settings, TrendingUp, TrendingDown, DollarSign, Activity, AlertCircle, RefreshCw } from "lucide-react";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { PriceChart } from "./PriceChart";
 import { CandlestickChart } from "./CandlestickChart";
 import { IndicatorsPanel } from "./IndicatorsPanel";
@@ -19,7 +21,38 @@ import { LiveControlPanel } from "./LiveControlPanel";
 import { TPSLPanel } from "./TPSLPanel";
 
 export const TradingDashboard = () => {
-  const { currentPrice, portfolio, positions, botStatus, indicators, recentTrades, chartData, tradingPairs, isLoading } = useTradingData();
+  const { currentPrice, portfolio, positions, botStatus, indicators, recentTrades, chartData, tradingPairs, isLoading, error, refetch } = useTradingData();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+          <p className="mt-4 text-lg">Lade Trading Dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <Alert className="max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="mt-2">
+            <div className="space-y-3">
+              <p className="font-medium">Verbindungsfehler</p>
+              <p className="text-sm text-muted-foreground">{error}</p>
+              <Button onClick={refetch} size="sm" className="w-full">
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Erneut versuchen
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-3 md:p-6 space-y-4 md:space-y-6">
@@ -101,28 +134,38 @@ export const TradingDashboard = () => {
       <AIMarketAnalyzer />
 
       {/* Complete Signal Panel */}
-      <CompleteSignalPanel />
+      <ErrorBoundary>
+        <CompleteSignalPanel />
+      </ErrorBoundary>
 
       {/* API & Live Signals - Mobile Stack */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
-        <ApiKeyManager />
-        <LiveSignalsPanel />
+        <ErrorBoundary>
+          <ApiKeyManager />
+        </ErrorBoundary>
+        <ErrorBoundary>
+          <LiveSignalsPanel />
+        </ErrorBoundary>
       </div>
 
       {/* Charts Section - Mobile optimiert */}
       <div className="space-y-4 md:space-y-6">
         {/* Line Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base md:text-lg">BTC/USDT Live Chart</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <PriceChart data={chartData} currentPrice={currentPrice} />
-          </CardContent>
-        </Card>
+        <ErrorBoundary>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base md:text-lg">BTC/USDT Live Chart</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PriceChart data={chartData} currentPrice={currentPrice} />
+            </CardContent>
+          </Card>
+        </ErrorBoundary>
 
         {/* Candlestick Chart */}
-        <CandlestickChart data={chartData} currentPrice={currentPrice} />
+        <ErrorBoundary>
+          <CandlestickChart data={chartData} currentPrice={currentPrice} />
+        </ErrorBoundary>
       </div>
 
       {/* Trading Interface - Mobile Stack */}
@@ -142,15 +185,21 @@ export const TradingDashboard = () => {
 
       {/* Meta-AI & Live Control - Neue Funktionen */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
-        <MetaAIPanel />
-        <LiveControlPanel />
+        <ErrorBoundary>
+          <MetaAIPanel />
+        </ErrorBoundary>
+        <ErrorBoundary>
+          <LiveControlPanel />
+        </ErrorBoundary>
       </div>
 
       {/* TP/SL Manager - Profi Trading Module */}
       <TPSLPanel />
 
       {/* AI Training Section */}
-      <AITrainingCenter />
+      <ErrorBoundary>
+        <AITrainingCenter />
+      </ErrorBoundary>
     </div>
   );
 };

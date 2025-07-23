@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { TradingPair, Portfolio, Position, BotStatus, TechnicalIndicator, Trade, ChartData } from '@/types/trading';
 import { binancePublicAPI } from '@/services/binancePublicAPI';
+import { useStableInterval } from './useStableInterval';
+import { useDebounce } from './useDebounce';
 
 // Hook with REAL live Binance data (no API keys needed for market data)
 export const useTradingData = () => {
   const [currentPrice, setCurrentPrice] = useState(0); // Will be loaded from real API
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [tradingPairs, setTradingPairs] = useState<TradingPair[]>([
     { symbol: 'BTCUSDT', baseAsset: 'BTC', quoteAsset: 'USDT', price: 0, change24h: 0, volume24h: 0 },
     { symbol: 'ETHUSDT', baseAsset: 'ETH', quoteAsset: 'USDT', price: 0, change24h: 0, volume24h: 0 },
@@ -95,13 +98,47 @@ export const useTradingData = () => {
 
   const [chartData, setChartData] = useState<ChartData[]>([]);
 
+  // Refs for cleanup and rate limiting
+  const fetchTimeoutRef = useRef<NodeJS.Timeout>();
+  const lastFetchTimeRef = useRef<number>(0);
+  const isFetchingRef = useRef<boolean>(false);
+
+  // Debounce current price updates
+  const debouncedCurrentPrice = useDebounce(currentPrice, 500);
+
   // Fetch REAL live data from Binance public API
-  const fetchRealLiveData = async () => {
+  const fetchRealLiveData = useCallback(async () => {
+    // Rate limiting: don't fetch more than once every 3 seconds
+    const now = Date.now();
+    if (now - lastFetchTimeRef.current < 3000) {
+      return;
+    }
+
+    // Prevent concurrent fetches
+    if (isFetchingRef.current) {
+      return;
+    }
+
+    isFetchingRef.current = true;
+    lastFetchTimeRef.current = now;
     try {
       console.log('🔄 Fetching REAL live data from Binance public API...');
+      setError(null);
       
-      // Get multiple symbols at once
-      const prices = await binancePublicAPI.getMultiplePrices(['BTCUSDT', 'ETHUSDT', 'ADAUSDT']);
+      // Add timeout wrapper
+      const fetchWithTimeout = (promise: Promise<any>, timeout: number = 5000) => {
+        return Promise.race([
+          promise,
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Request timeout')), timeout)
+          )
+        ]);
+      };
+      
+      // Get multiple symbols at once with timeout
+      const prices = await fetchWithTimeout(
+        binancePublicAPI.getMultiplePrices(['BTCUSDT', 'ETHUSDT', 'ADAUSDT'])
+      );
       
       if (prices) {
         const btcPrice = prices['BTCUSDT'];
@@ -158,9 +195,9 @@ export const useTradingData = () => {
         })));
       }
 
-      // Get detailed 24hr ticker data
-      const btcTicker = await binancePublicAPI.get24hrTicker('BTCUSDT');
-      const ethTicker = await binancePublicAPI.get24hrTicker('ETHUSDT');
+      // Get detailed 24hr ticker data with timeout
+      const btcTicker = await fetchWithTimeout(binancePublicAPI.get24hrTicker('BTCUSDT'));
+      const ethTicker = await fetchWithTimeout(binancePublicAPI.get24hrTicker('ETHUSDT'));
       
       if (btcTicker) {
         setTradingPairs(prev => prev.map(pair => 
@@ -178,8 +215,10 @@ export const useTradingData = () => {
         ));
       }
 
-      // Get real chart data (1-minute candles)
-      const klineData = await binancePublicAPI.getKlineData('BTCUSDT', '1m', 50);
+      // Get real chart data (1-minute candles) with timeout
+      const klineData = await fetchWithTimeout(
+        binancePublicAPI.getKlineData('BTCUSDT', '1m', 50)
+      );
       if (klineData) {
         setChartData(klineData);
         console.log('✅ Loaded real chart data with', klineData.length, 'candles');
@@ -187,27 +226,40 @@ export const useTradingData = () => {
 
     } catch (error) {
       console.error('❌ Error fetching real live data:', error);
+      setError(error instanceof Error ? error.message : 'Unknown error');
       setIsLoading(false);
+    } finally {
+      isFetchingRef.current = false;
     }
-  };
+  }, []);
+
+  // Clear timeout on cleanup
+  useEffect(() => {
+    return () => {
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Load initial REAL data
   useEffect(() => {
     console.log('🚀 Loading initial REAL live data from Binance...');
     fetchRealLiveData();
-  }, []);
+  }, [fetchRealLiveData]);
 
-  // Update with REAL data every 5 seconds
+  // Use stable interval with error handling
+  const clearDataInterval = useStableInterval(fetchRealLiveData, 8000); // Increased to 8 seconds
+
+  // Cleanup on unmount
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetchRealLiveData();
-    }, 5000); // Real data every 5 seconds
-
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      clearDataInterval();
+    };
+  }, [clearDataInterval]);
 
   return {
-    currentPrice,
+    currentPrice: debouncedCurrentPrice,
     tradingPairs,
     portfolio,
     positions,
@@ -216,5 +268,7 @@ export const useTradingData = () => {
     recentTrades,
     chartData,
     isLoading,
+    error,
+    refetch: fetchRealLiveData,
   };
 };

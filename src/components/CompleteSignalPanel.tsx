@@ -300,7 +300,11 @@ export const CompleteSignalPanel = () => {
                 <Copy className="w-4 h-4 mr-2" />
                 Signal kopieren
               </Button>
-              <Button variant="outline" className="flex-1">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => window.open(`https://www.tradingview.com/chart/?symbol=BINANCE:${currentSignal?.symbol}USDT`, '_blank')}
+              >
                 Trading View öffnen
               </Button>
             </div>

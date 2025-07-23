@@ -8,6 +8,8 @@ import { IndicatorsPanel } from "./IndicatorsPanel";
 import { PositionsTable } from "./PositionsTable";
 import { TradesHistory } from "./TradesHistory";
 import { BotControls } from "./BotControls";
+import { ApiKeyManager } from "./ApiKeyManager";
+import { LiveSignalsPanel } from "./LiveSignalsPanel";
 
 export const TradingDashboard = () => {
   const { currentPrice, portfolio, positions, botStatus, indicators, recentTrades, chartData, tradingPairs } = useTradingData();
@@ -80,6 +82,12 @@ export const TradingDashboard = () => {
             <p className="text-xs text-muted-foreground">{botStatus.totalTrades} Trades</p>
           </CardContent>
         </Card>
+      </div>
+
+      {/* API Configuration */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ApiKeyManager />
+        <LiveSignalsPanel />
       </div>
 
       {/* Main Trading Interface */}

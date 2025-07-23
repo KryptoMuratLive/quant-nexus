@@ -11,6 +11,7 @@ import { TradesHistory } from "./TradesHistory";
 import { BotControls } from "./BotControls";
 import { ApiKeyManager } from "./ApiKeyManager";
 import { LiveSignalsPanel } from "./LiveSignalsPanel";
+import { AITrainingCenter } from "./AITrainingCenter";
 
 export const TradingDashboard = () => {
   const { currentPrice, portfolio, positions, botStatus, indicators, recentTrades, chartData, tradingPairs, isLoading } = useTradingData();
@@ -126,6 +127,9 @@ export const TradingDashboard = () => {
           <TradesHistory trades={recentTrades} />
         </div>
       </div>
+
+      {/* AI Training Section */}
+      <AITrainingCenter />
     </div>
   );
 };

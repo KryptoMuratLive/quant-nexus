@@ -16,6 +16,7 @@ import { CompleteSignalPanel } from "./CompleteSignalPanel";
 import { AIMarketAnalyzer } from "./AIMarketAnalyzer";
 import { MetaAIPanel } from "./MetaAIPanel";
 import { LiveControlPanel } from "./LiveControlPanel";
+import { TPSLPanel } from "./TPSLPanel";
 
 export const TradingDashboard = () => {
   const { currentPrice, portfolio, positions, botStatus, indicators, recentTrades, chartData, tradingPairs, isLoading } = useTradingData();
@@ -144,6 +145,9 @@ export const TradingDashboard = () => {
         <MetaAIPanel />
         <LiveControlPanel />
       </div>
+
+      {/* TP/SL Manager - Profi Trading Module */}
+      <TPSLPanel />
 
       {/* AI Training Section */}
       <AITrainingCenter />
